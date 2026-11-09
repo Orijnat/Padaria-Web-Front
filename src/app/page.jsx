@@ -34,7 +34,7 @@ export default function Home() {
     const [editFab, setEditFab] = useState(null);
     const [editFunc, setEditFunc] = useState(null);
     const [editCat, setEditCat] = useState(null);
-    const { insumos, receitas, produtos, fabricacoes, funcionarios, categorias, pedidos, clientes, adminLogado, clienteLogado, setAdminLogado, setClienteLogado, salvarInsumo, excluirInsumo, salvarReceita, excluirReceita, salvarProduto, alternarStatusProduto, excluirProduto, salvarFab, excluirFab, mudarStatusFabricacao, salvarFunc, excluirFunc, salvarCat, excluirCat, mudarStatusPedido, novoPedidoCliente, cadastrarCliente, } = usePadaria();
+    const { insumos, receitas, produtos, fabricacoes, funcionarios, categorias, pedidos, adminLogado, clienteLogado, entrar, sair, salvarInsumo, excluirInsumo, salvarReceita, excluirReceita, salvarProduto, alternarStatusProduto, excluirProduto, salvarFab, excluirFab, mudarStatusFabricacao, salvarFunc, excluirFunc, salvarCat, excluirCat, mudarStatusPedido, novoPedidoCliente, cadastrarCliente, } = usePadaria();
     function navTo(s) {
         setScreen(s);
         setEditInsumo(null);
@@ -75,19 +75,19 @@ export default function Home() {
     }
     if (modo === 'cliente') {
         if (!clienteLogado) {
-            return (<LoginCliente clientes={clientes} onLogin={setClienteLogado} onCadastrar={cadastrarCliente} onVoltar={() => setModo('escolha')}/>);
+            return (<LoginCliente onEntrar={(email, senha) => entrar(email, senha, 'cliente')} onCadastrar={cadastrarCliente} onVoltar={() => setModo('escolha')}/>);
         }
         return (<PortalCliente cliente={clienteLogado} produtos={produtos} categorias={categorias} pedidos={pedidos} onNovoPedido={novoPedidoCliente} onLogout={() => {
-                setClienteLogado(null);
+                sair();
                 setModo('escolha');
             }}/>);
     }
     if (!adminLogado) {
-        return (<LoginAdmin onLogin={() => setAdminLogado(true)} onVoltar={() => setModo('escolha')}/>);
+        return (<LoginAdmin onEntrar={(email, senha) => entrar(email, senha, 'funcionario')} onVoltar={() => setModo('escolha')}/>);
     }
     return (<div style={{ display: 'flex', minHeight: '100vh', background: '#faf6f0' }}>
       <Sidebar current={screen} onNav={navTo} onLogout={() => {
-            setAdminLogado(false);
+            sair();
             setModo('escolha');
         }}/>
 

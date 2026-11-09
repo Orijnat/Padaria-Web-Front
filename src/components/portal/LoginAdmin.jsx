@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
 import { Field } from '@/components/ui/Field';
 import { inp, IC, focusBrown, blurBrown } from '@/components/ui/styles';
-export function LoginAdmin({ onLogin, onVoltar }) {
+export function LoginAdmin({ onEntrar, onVoltar }) {
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
     const [erro, setErro] = useState('');
-    function submit(e) {
+    const [carregando, setCarregando] = useState(false);
+    async function submit(e) {
         e.preventDefault();
-        if (email === 'admin@padaria.com' && senha === '123456') {
-            onLogin();
+        setErro('');
+        if (!email.trim() || !senha) {
+            setErro('Informe e-mail e senha.');
+            return;
         }
-        else {
-            setErro('Credenciais incorretas. Tente: admin@padaria.com / 123456');
-        }
+        setCarregando(true);
+        const r = await onEntrar(email.trim(), senha);
+        setCarregando(false);
+        if (!r.ok)
+            setErro(r.erro);
     }
     return (<div className="min-h-screen flex" style={{ background: '#faf6f0' }}>
       <div className="hidden lg:flex flex-col justify-between p-12 shadow-xl" style={{ width: 480, background: '#4e2b0e', flexShrink: 0 }}>
@@ -61,22 +66,19 @@ export function LoginAdmin({ onLogin, onVoltar }) {
           <p className="text-sm mb-8" style={{ color: '#a96e2c' }}>
             Gestão interna e produção da padaria
           </p>
-          <form onSubmit={submit} className="flex flex-col gap-5">
+          <form onSubmit={submit} noValidate className="flex flex-col gap-5">
             <Field label="E-mail">
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@padaria.com" required className={IC} style={inp()} onFocus={focusBrown} onBlur={blurBrown}/>
+              <input type="email" name="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@padaria.com" required className={IC} style={inp()} onFocus={focusBrown} onBlur={blurBrown}/>
             </Field>
             <Field label="Senha">
-              <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="••••••" required className={IC} style={inp()} onFocus={focusBrown} onBlur={blurBrown}/>
+              <input type="password" name="senha" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="••••••••" required className={IC} style={inp()} onFocus={focusBrown} onBlur={blurBrown}/>
             </Field>
-            {erro && (<p className="text-xs px-3 py-2 rounded" style={{ background: '#fce8e6', color: '#c0392b' }}>
+            {erro && (<p role="alert" className="text-xs px-3 py-2 rounded" style={{ background: '#fce8e6', color: '#c0392b' }}>
                 {erro}
               </p>)}
-            <button type="submit" className="py-3 rounded-lg text-sm font-semibold cursor-pointer shadow transition-all hover:brightness-110" style={{ background: '#8a5420', color: '#faf6f0' }}>
-              Entrar no Painel
+            <button type="submit" disabled={carregando} className="py-3 rounded-lg text-sm font-semibold cursor-pointer shadow transition-all hover:brightness-110 disabled:cursor-wait disabled:opacity-70" style={{ background: '#8a5420', color: '#faf6f0' }}>
+              {carregando ? 'Entrando…' : 'Entrar no Painel'}
             </button>
-            <div className="text-xs text-center mt-2" style={{ color: '#a96e2c' }}>
-              Dica: use <strong>admin@padaria.com</strong> e senha <strong>123456</strong>
-            </div>
           </form>
         </div>
       </div>
