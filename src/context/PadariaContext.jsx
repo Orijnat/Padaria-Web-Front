@@ -1,7 +1,25 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { categoriasBase, funcionariosBase, insumosBase, receitasBase, produtosBase, fabricacoesBase, pedidosBase, clientesBase, } from '@/data/mockData';
-import api from '@/utils/api';
+import { jwtDecode } from 'jwt-decode';
+import { categoriasBase, funcionariosBase, insumosBase, receitasBase, produtosBase, fabricacoesBase, pedidosBase, } from '@/data/mockData';
+import api, { CHAVE_TOKEN } from '@/utils/axios';
+// Mensagem de erro amigável a partir de uma falha do axios.
+function falhaDaApi(e) {
+    return {
+        ok: false,
+        erro: e?.response?.data?.erro ?? 'Sem conexão com o servidor. Tente novamente.',
+        campos: e?.response?.data?.campos ?? {},
+    };
+}
+function tokenValido(token) {
+    try {
+        const { exp } = jwtDecode(token);
+        return !exp || exp * 1000 > Date.now();
+    }
+    catch {
+        return false;
+    }
+}
 const PadariaContext = createContext(undefined);
 export function PadariaProvider({ children }) {
     const [insumos, setInsumos] = useState(insumosBase);
@@ -11,7 +29,6 @@ export function PadariaProvider({ children }) {
     const [funcionarios, setFuncionarios] = useState(funcionariosBase);
     const [categorias, setCategorias] = useState(categoriasBase);
     const [pedidos, setPedidos] = useState(pedidosBase);
-    const [clientes, setClientes] = useState(clientesBase);
     const [adminLogado, setAdminLogado] = useState(false);
     const [clienteLogado, setClienteLogado] = useState(null);
     // 1. Carregamento inicial de localStorage e sincronização com API
@@ -38,9 +55,6 @@ export function PadariaProvider({ children }) {
             const savedPedidos = localStorage.getItem('padaria_pedidos');
             if (savedPedidos)
                 setPedidos(JSON.parse(savedPedidos));
-            const savedClientes = localStorage.getItem('padaria_clientes');
-            if (savedClientes)
-                setClientes(JSON.parse(savedClientes));
         }
         catch { }
         // Sincronização opcional se API estiver disponível
@@ -80,6 +94,24 @@ export function PadariaProvider({ children }) {
             catch { }
         }
         syncWithApi();
+        // Restaura o login salvo (token JWT no localStorage).
+        const token = localStorage.getItem(CHAVE_TOKEN);
+        if (token && tokenValido(token)) {
+            api.get('/auth/me')
+                .then(({ data }) => {
+                if (data.usuario?.tipo === 'funcionario')
+                    setAdminLogado(true);
+                else
+                    setClienteLogado(data.usuario ?? null);
+            })
+                .catch((e) => {
+                if (e?.response?.status === 401)
+                    localStorage.removeItem(CHAVE_TOKEN);
+            });
+        }
+        else if (token) {
+            localStorage.removeItem(CHAVE_TOKEN);
+        }
     }, []);
     // 2. Persistência no LocalStorage
     useEffect(() => {
@@ -124,12 +156,6 @@ export function PadariaProvider({ children }) {
         }
         catch { }
     }, [pedidos]);
-    useEffect(() => {
-        try {
-            localStorage.setItem('padaria_clientes', JSON.stringify(clientes));
-        }
-        catch { }
-    }, [clientes]);
     // Insumo actions
     async function salvarInsumo(i) {
         if ('id' in i) {
@@ -279,11 +305,52 @@ export function PadariaProvider({ children }) {
     function novoPedidoCliente(p) {
         setPedidos((prev) => [...prev, { ...p, id: Date.now() }]);
     }
-    function cadastrarCliente(nome, email, senha) {
-        const novo = { id: Date.now(), nome, email, senha };
-        setClientes((p) => [...p, novo]);
-        api.post('/clientes', { nome, email }).catch(() => { });
-        return novo;
+    // Autenticação (back-end em src/app/api)
+    function guardarToken(token) {
+        try {
+            localStorage.setItem(CHAVE_TOKEN, token);
+        }
+        catch { }
+    }
+    // tipo: 'cliente' (portal) ou 'funcionario' (área administrativa)
+    async function entrar(email, senha, tipo = 'cliente') {
+        try {
+            const { data } = await api.post('/auth/login', {
+                email,
+                senha,
+                tipo: tipo === 'funcionario' ? 'funcionario' : undefined,
+            });
+            guardarToken(data.token);
+            if (tipo === 'funcionario')
+                setAdminLogado(true);
+            else
+                setClienteLogado(data.usuario);
+            return { ok: true, usuario: data.usuario };
+        }
+        catch (e) {
+            return falhaDaApi(e);
+        }
+    }
+    async function cadastrarCliente({ nome, email, telefone, senha }) {
+        try {
+            const { data } = await api.post('/usuarios', { nome, email, telefone, senha });
+            if (data.token) {
+                guardarToken(data.token);
+                setClienteLogado(data.usuario);
+            }
+            return { ok: true, usuario: data.usuario };
+        }
+        catch (e) {
+            return falhaDaApi(e);
+        }
+    }
+    function sair() {
+        try {
+            localStorage.removeItem(CHAVE_TOKEN);
+        }
+        catch { }
+        setAdminLogado(false);
+        setClienteLogado(null);
     }
     return (<PadariaContext.Provider value={{
             insumos,
@@ -293,11 +360,10 @@ export function PadariaProvider({ children }) {
             funcionarios,
             categorias,
             pedidos,
-            clientes,
             adminLogado,
             clienteLogado,
-            setAdminLogado,
-            setClienteLogado,
+            entrar,
+            sair,
             salvarInsumo,
             excluirInsumo,
             salvarReceita,
