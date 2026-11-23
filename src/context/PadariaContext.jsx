@@ -7,8 +7,8 @@ import api, { CHAVE_TOKEN } from '@/utils/axios';
 function falhaDaApi(e) {
     return {
         ok: false,
-        erro: e?.response?.data?.erro ?? 'Sem conexão com o servidor. Tente novamente.',
-        campos: e?.response?.data?.campos ?? {},
+        erro: e?.response?.data?.erro ?? e?.response?.data?.message ?? 'Sem conexão com o servidor. Tente novamente.',
+        campos: e?.response?.data?.campos ?? e?.response?.data?.errors ?? {},
     };
 }
 function tokenValido(token) {
@@ -20,78 +20,68 @@ function tokenValido(token) {
         return false;
     }
 }
+function getSaved(key, fallback) {
+    if (typeof window === 'undefined') return fallback;
+    try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
 const PadariaContext = createContext(undefined);
 export function PadariaProvider({ children }) {
-    const [insumos, setInsumos] = useState(insumosBase);
-    const [receitas, setReceitas] = useState(receitasBase);
-    const [produtos, setProdutos] = useState(produtosBase);
-    const [fabricacoes, setFabricacoes] = useState(fabricacoesBase);
-    const [funcionarios, setFuncionarios] = useState(funcionariosBase);
-    const [categorias, setCategorias] = useState(categoriasBase);
-    const [pedidos, setPedidos] = useState(pedidosBase);
+    const [insumos, setInsumos] = useState(() => getSaved('padaria_insumos', insumosBase));
+    const [receitas, setReceitas] = useState(() => getSaved('padaria_receitas', receitasBase));
+    const [produtos, setProdutos] = useState(() => getSaved('padaria_produtos', produtosBase));
+    const [fabricacoes, setFabricacoes] = useState(() => getSaved('padaria_fabricacoes', fabricacoesBase));
+    const [funcionarios, setFuncionarios] = useState(() => getSaved('padaria_funcionarios', funcionariosBase));
+    const [categorias, setCategorias] = useState(() => getSaved('padaria_categorias', categoriasBase));
+    const [pedidos, setPedidos] = useState(() => getSaved('padaria_pedidos', pedidosBase));
     const [adminLogado, setAdminLogado] = useState(false);
     const [clienteLogado, setClienteLogado] = useState(null);
-    // 1. Carregamento inicial de localStorage e sincronização com API
-    useEffect(() => {
+    // Ressincroniza insumos/produtos após login de funcionário (rotas protegidas).
+    async function sincronizarComApi() {
         try {
-            const savedInsumos = localStorage.getItem('padaria_insumos');
-            if (savedInsumos)
-                setInsumos(JSON.parse(savedInsumos));
-            const savedReceitas = localStorage.getItem('padaria_receitas');
-            if (savedReceitas)
-                setReceitas(JSON.parse(savedReceitas));
-            const savedProdutos = localStorage.getItem('padaria_produtos');
-            if (savedProdutos)
-                setProdutos(JSON.parse(savedProdutos));
-            const savedFabricacoes = localStorage.getItem('padaria_fabricacoes');
-            if (savedFabricacoes)
-                setFabricacoes(JSON.parse(savedFabricacoes));
-            const savedFuncionarios = localStorage.getItem('padaria_funcionarios');
-            if (savedFuncionarios)
-                setFuncionarios(JSON.parse(savedFuncionarios));
-            const savedCategorias = localStorage.getItem('padaria_categorias');
-            if (savedCategorias)
-                setCategorias(JSON.parse(savedCategorias));
-            const savedPedidos = localStorage.getItem('padaria_pedidos');
-            if (savedPedidos)
-                setPedidos(JSON.parse(savedPedidos));
+            const resInsumos = await api.get('/insumos');
+            if (Array.isArray(resInsumos.data) && resInsumos.data.length > 0) {
+                const mapped = resInsumos.data.map((item) => ({
+                    id: item.id,
+                    nome: item.nome,
+                    unidade: item.unidadeMedida || 'kg',
+                    estoque: Number(item.quantidadeAtual) || 0,
+                    minimo: Number(item.estoqueMinimo) || 0,
+                    custo: Number(item.custo) || 0,
+                    fornecedor: item.fornecedor || '',
+                }));
+                setInsumos(mapped);
+            }
         }
         catch { }
+        try {
+            const resProdutos = await api.get('/produtos');
+            if (Array.isArray(resProdutos.data) && resProdutos.data.length > 0) {
+                const mapped = resProdutos.data.map((item) => ({
+                    id: item.id,
+                    nome: item.nome,
+                    categoriaId: item.categoriaId || 1,
+                    receitaId: item.receitaId || null,
+                    preco: Number(item.preco) || 0,
+                    ativo: item.ativo !== undefined ? Boolean(item.ativo) : true,
+                    descricao: item.descricao || '',
+                    emoji: item.emoji || '🥖',
+                }));
+                setProdutos(mapped);
+            }
+        }
+        catch { }
+    }
+    // 1. Sincronização com API e restauração de sessão
+    useEffect(() => {
         // Sincronização opcional se API estiver disponível
         async function syncWithApi() {
-            try {
-                const resInsumos = await api.get('/insumos');
-                if (Array.isArray(resInsumos.data) && resInsumos.data.length > 0) {
-                    const mapped = resInsumos.data.map((item) => ({
-                        id: item.id,
-                        nome: item.nome,
-                        unidade: item.unidade_medida || item.unidade || 'kg',
-                        estoque: item.quantidade_atual !== undefined ? item.quantidade_atual : (item.estoque || 0),
-                        minimo: item.estoque_minimo !== undefined ? item.estoque_minimo : (item.minimo || 0),
-                        custo: Number(item.custo) || 0,
-                        fornecedor: item.fornecedor || '',
-                    }));
-                    setInsumos(mapped);
-                }
-            }
-            catch { }
-            try {
-                const resProdutos = await api.get('/produtos');
-                if (Array.isArray(resProdutos.data) && resProdutos.data.length > 0) {
-                    const mapped = resProdutos.data.map((item) => ({
-                        id: item.id,
-                        nome: item.nome,
-                        categoriaId: item.categoria_id || item.categoriaId || 1,
-                        receitaId: item.receita_id || item.receitaId || null,
-                        preco: Number(item.preco) || 0,
-                        ativo: item.ativo !== undefined ? Boolean(item.ativo) : true,
-                        descricao: item.descricao || '',
-                        emoji: item.emoji || '🥖',
-                    }));
-                    setProdutos(mapped);
-                }
-            }
-            catch { }
+            await sincronizarComApi();
         }
         syncWithApi();
         // Restaura o login salvo (token JWT no localStorage).
@@ -112,6 +102,7 @@ export function PadariaProvider({ children }) {
         else if (token) {
             localStorage.removeItem(CHAVE_TOKEN);
         }
+         
     }, []);
     // 2. Persistência no LocalStorage
     useEffect(() => {
@@ -163,9 +154,9 @@ export function PadariaProvider({ children }) {
             try {
                 await api.put(`/insumos/${i.id}`, {
                     nome: i.nome,
-                    unidade_medida: i.unidade,
-                    quantidade_atual: i.estoque,
-                    estoque_minimo: i.minimo,
+                    unidadeMedida: i.unidade,
+                    quantidadeAtual: i.estoque,
+                    estoqueMinimo: i.minimo,
                     custo: i.custo,
                     fornecedor: i.fornecedor,
                 });
@@ -179,9 +170,9 @@ export function PadariaProvider({ children }) {
             try {
                 const res = await api.post('/insumos', {
                     nome: i.nome,
-                    unidade_medida: i.unidade,
-                    quantidade_atual: i.estoque,
-                    estoque_minimo: i.minimo,
+                    unidadeMedida: i.unidade,
+                    quantidadeAtual: i.estoque,
+                    estoqueMinimo: i.minimo,
                     custo: i.custo,
                     fornecedor: i.fornecedor,
                 });
@@ -219,8 +210,8 @@ export function PadariaProvider({ children }) {
                 await api.put(`/produtos/${p.id}`, {
                     nome: p.nome,
                     preco: p.preco,
-                    categoria_id: p.categoriaId,
-                    receita_id: p.receitaId,
+                    categoriaId: p.categoriaId,
+                    receitaId: p.receitaId,
                     descricao: p.descricao,
                     emoji: p.emoji,
                     ativo: p.ativo,
@@ -236,8 +227,8 @@ export function PadariaProvider({ children }) {
                 const res = await api.post('/produtos', {
                     nome: p.nome,
                     preco: p.preco,
-                    categoria_id: p.categoriaId,
-                    receita_id: p.receitaId,
+                    categoriaId: p.categoriaId,
+                    receitaId: p.receitaId,
                     descricao: p.descricao,
                     emoji: p.emoji,
                     ativo: true,
@@ -305,7 +296,7 @@ export function PadariaProvider({ children }) {
     function novoPedidoCliente(p) {
         setPedidos((prev) => [...prev, { ...p, id: Date.now() }]);
     }
-    // Autenticação (back-end em src/app/api)
+    // Autenticação (back-end em padariaApi)
     function guardarToken(token) {
         try {
             localStorage.setItem(CHAVE_TOKEN, token);
@@ -321,8 +312,10 @@ export function PadariaProvider({ children }) {
                 tipo: tipo === 'funcionario' ? 'funcionario' : undefined,
             });
             guardarToken(data.token);
-            if (tipo === 'funcionario')
+            if (tipo === 'funcionario') {
                 setAdminLogado(true);
+                sincronizarComApi();
+            }
             else
                 setClienteLogado(data.usuario);
             return { ok: true, usuario: data.usuario };

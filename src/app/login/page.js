@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import api, { CHAVE_TOKEN } from '@/utils/axios';
 import styles from './login.module.css';
 
 export default function Login() {
@@ -14,21 +15,16 @@ export default function Login() {
     setCarregando(true);
 
     try {
-      const resposta = await fetch('http://localhost:3001/usuarios/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha }),
-      });
+      const { data } = await api.post('/auth/login', { email, senha });
 
-      const dados = await resposta.json();
-
-      if (resposta.ok) {
-        setMensagem('Bem-vindo, ' + dados.usuario.nome + '!');
-      } else {
-        setMensagem(dados.erro);
+      if (data?.token) {
+        localStorage.setItem(CHAVE_TOKEN, data.token);
       }
+
+      setMensagem(`Bem-vindo, ${data.usuario.nome}!`);
     } catch (erro) {
-      setMensagem('Não foi possível conectar à API.');
+      const msg = erro?.response?.data?.erro || erro?.response?.data?.message || 'Não foi possível conectar à API.';
+      setMensagem(msg);
     }
 
     setCarregando(false);

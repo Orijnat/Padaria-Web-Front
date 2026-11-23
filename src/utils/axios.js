@@ -11,4 +11,15 @@ api.interceptors.request.use((config) => {
 }, (error) => {
     return Promise.reject(error);
 });
+// Desfaz o envelope da API ({ success, data?, message?, error? }) para que os
+// call sites consumam `res.data` diretamente, como antes.
+api.interceptors.response.use((response) => {
+    const payload = response?.data;
+    if (payload && typeof payload === 'object' && payload.success === true) {
+        response.data = 'data' in payload ? payload.data : payload;
+    }
+    return response;
+}, (error) => {
+    return Promise.reject(error);
+});
 export default api;
