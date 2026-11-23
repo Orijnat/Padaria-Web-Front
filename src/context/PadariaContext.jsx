@@ -3,12 +3,61 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { categoriasBase, funcionariosBase, insumosBase, receitasBase, produtosBase, fabricacoesBase, pedidosBase, } from '@/data/mockData';
 import api, { CHAVE_TOKEN } from '@/utils/axios';
+import apiBack from '@/utils/apiBack';
 // Mensagem de erro amigável a partir de uma falha do axios.
 function falhaDaApi(e) {
     return {
         ok: false,
         erro: e?.response?.data?.erro ?? 'Sem conexão com o servidor. Tente novamente.',
         campos: e?.response?.data?.campos ?? {},
+    };
+}
+// Converte a ordem de fabricação que vem da API (banco) para o formato usado nas telas.
+function fabricacaoDaApi(f) {
+    return {
+        id: f.id,
+        produtoId: f.produtoId,
+        funcionarioId: f.funcionarioId,
+        data: String(f.data_producao || '').slice(0, 10),
+        quantidade: Number(f.quantidade) || 0,
+        status: f.status,
+    };
+}
+// Converte a ordem de fabricação das telas para o formato que a API (banco) espera.
+function fabricacaoParaApi(f) {
+    return {
+        produtoId: f.produtoId,
+        funcionarioId: f.funcionarioId,
+        data_producao: f.data,
+        quantidade: Number(f.quantidade),
+        status: f.status,
+    };
+}
+// Converte o funcionário que vem da API (banco) para o formato usado nas telas.
+function funcionarioDaApi(f) {
+    return {
+        id: f.id,
+        nome: f.nome,
+        cargo: f.cargo,
+        email: f.email,
+        telefone: f.telefone || '',
+        cpf: f.cpf,
+        dataAdmissao: String(f.data_admissao || '').slice(0, 10),
+        salario: Number(f.salario) || 0,
+        ativo: Boolean(f.ativo),
+    };
+}
+// Converte o funcionário das telas para o formato que a API (banco) espera.
+function funcionarioParaApi(f) {
+    return {
+        nome: f.nome,
+        cargo: f.cargo,
+        email: f.email,
+        telefone: f.telefone,
+        cpf: f.cpf,
+        data_admissao: f.dataAdmissao,
+        salario: Number(f.salario) || 0,
+        ativo: f.ativo,
     };
 }
 function tokenValido(token) {
@@ -93,6 +142,26 @@ export function PadariaProvider({ children }) {
             }
             catch { }
         }
+        // Funcionários vêm do back (Express + PostgreSQL)
+        async function carregarFuncionarios() {
+            try {
+                const { data } = await apiBack.get('/funcionarios');
+                if (Array.isArray(data))
+                    setFuncionarios(data.map(funcionarioDaApi));
+            }
+            catch { }
+        }
+        carregarFuncionarios();
+        // Ordens de fabricação também vêm do back
+        async function carregarFabricacoes() {
+            try {
+                const { data } = await apiBack.get('/fabricacoes');
+                if (Array.isArray(data))
+                    setFabricacoes(data.map(fabricacaoDaApi));
+            }
+            catch { }
+        }
+        carregarFabricacoes();
         syncWithApi();
         // Restaura o login salvo (token JWT no localStorage).
         const token = localStorage.getItem(CHAVE_TOKEN);
@@ -260,31 +329,69 @@ export function PadariaProvider({ children }) {
         catch { }
     }
     // Fabricacao actions
-    function salvarFab(f) {
-        if ('id' in f) {
-            setFabricacoes((p) => p.map((x) => (x.id === f.id ? f : x)));
+    // Devolve true se salvou no banco, false se deu erro (e avisa o usuário).
+    async function salvarFab(f) {
+        try {
+            if ('id' in f) {
+                const { data } = await apiBack.put(`/fabricacoes/${f.id}`, fabricacaoParaApi(f));
+                setFabricacoes((p) => p.map((x) => (x.id === f.id ? fabricacaoDaApi(data) : x)));
+            }
+            else {
+                const { data } = await apiBack.post('/fabricacoes', fabricacaoParaApi(f));
+                setFabricacoes((p) => [...p, fabricacaoDaApi(data)]);
+            }
+            return true;
         }
-        else {
-            setFabricacoes((p) => [...p, { ...f, id: Date.now() }]);
+        catch (e) {
+            window.alert(e?.response?.data?.message ?? 'Não foi possível salvar a ordem de fabricação. A API está ligada?');
+            return false;
         }
     }
-    function excluirFab(id) {
-        setFabricacoes((p) => p.filter((x) => x.id !== id));
+    async function excluirFab(id) {
+        try {
+            await apiBack.delete(`/fabricacoes/${id}`);
+            setFabricacoes((p) => p.filter((x) => x.id !== id));
+        }
+        catch (e) {
+            window.alert(e?.response?.data?.message ?? 'Não foi possível excluir a ordem de fabricação. A API está ligada?');
+        }
     }
-    function mudarStatusFabricacao(id, s) {
-        setFabricacoes((p) => p.map((x) => (x.id === id ? { ...x, status: s } : x)));
+    async function mudarStatusFabricacao(id, s) {
+        try {
+            const { data } = await apiBack.patch(`/fabricacoes/${id}/status`, { status: s });
+            setFabricacoes((p) => p.map((x) => (x.id === id ? fabricacaoDaApi(data) : x)));
+        }
+        catch (e) {
+            window.alert(e?.response?.data?.message ?? 'Não foi possível mudar o status. A API está ligada?');
+        }
     }
     // Funcionario actions
-    function salvarFunc(f) {
-        if ('id' in f) {
-            setFuncionarios((p) => p.map((x) => (x.id === f.id ? f : x)));
+    // Devolve true se salvou no banco, false se deu erro (e avisa o usuário).
+    async function salvarFunc(f) {
+        try {
+            if ('id' in f) {
+                const { data } = await apiBack.put(`/funcionarios/${f.id}`, funcionarioParaApi(f));
+                setFuncionarios((p) => p.map((x) => (x.id === f.id ? funcionarioDaApi(data) : x)));
+            }
+            else {
+                const { data } = await apiBack.post('/funcionarios', funcionarioParaApi(f));
+                setFuncionarios((p) => [...p, funcionarioDaApi(data)]);
+            }
+            return true;
         }
-        else {
-            setFuncionarios((p) => [...p, { ...f, id: Date.now() }]);
+        catch (e) {
+            window.alert(e?.response?.data?.message ?? 'Não foi possível salvar o funcionário. A API está ligada?');
+            return false;
         }
     }
-    function excluirFunc(id) {
-        setFuncionarios((p) => p.filter((x) => x.id !== id));
+    async function excluirFunc(id) {
+        try {
+            await apiBack.delete(`/funcionarios/${id}`);
+            setFuncionarios((p) => p.filter((x) => x.id !== id));
+        }
+        catch (e) {
+            window.alert(e?.response?.data?.message ?? 'Não foi possível excluir o funcionário. A API está ligada?');
+        }
     }
     // Categoria actions
     function salvarCat(c) {

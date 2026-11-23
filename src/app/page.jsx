@@ -57,13 +57,15 @@ export default function Home() {
         await salvarProduto(p);
         navTo('produtos');
     }
-    function handleSalvarFab(f) {
-        salvarFab(f);
-        navTo('fabricacao');
+    async function handleSalvarFab(f) {
+        const salvou = await salvarFab(f);
+        if (salvou)
+            navTo('fabricacao');
     }
-    function handleSalvarFunc(f) {
-        salvarFunc(f);
-        navTo('funcionarios');
+    async function handleSalvarFunc(f) {
+        const salvou = await salvarFunc(f);
+        if (salvou)
+            navTo('funcionarios');
     }
     function handleSalvarCat(c) {
         salvarCat(c);
