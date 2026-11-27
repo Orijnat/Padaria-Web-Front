@@ -128,6 +128,9 @@ export function PadariaProvider({ children }) {
                     cargo: f.cargo || '',
                     email: f.email || '',
                     telefone: f.telefone || '',
+                    cpf: f.cpf || '',
+                    dataAdmissao: f.dataAdmissao ? String(f.dataAdmissao).slice(0, 10) : '',
+                    salario: Number(f.salario) || 0,
                     ativo: f.ativo !== false,
                 })));
             }
@@ -355,18 +358,55 @@ export function PadariaProvider({ children }) {
         }
         catch { }
     }
+    async function recarregarEstoque() {
+        try {
+            const [resInsumos, resProdutos] = await Promise.all([
+                api.get('/insumos'),
+                api.get('/produtos'),
+            ]);
+            if (Array.isArray(resInsumos.data)) {
+                setInsumos(resInsumos.data.map((i) => ({
+                    id: i.id, nome: i.nome, unidade: i.unidadeMedida,
+                    estoque: Number(i.quantidadeAtual) || 0, minimo: Number(i.estoqueMinimo) || 0,
+                    custo: Number(i.custo) || 0, fornecedor: i.fornecedor || '',
+                })));
+            }
+            if (Array.isArray(resProdutos.data)) {
+                setProdutos(resProdutos.data.map((item) => ({
+                    id: item.id, nome: item.nome, categoriaId: item.categoriaId || 1,
+                    receitaId: item.receitaId || null, preco: Number(item.preco) || 0,
+                    ativo: item.ativo !== undefined ? Boolean(item.ativo) : true,
+                    descricao: item.descricao || '', emoji: item.emoji || '',
+                    estoque: Number(item.estoque) || 0,
+                })));
+            }
+        } catch { }
+    }
     // Fabricacao actions
     async function salvarFab(f) {
         if ('id' in f) {
+            const anterior = fabricacoes.find((x) => x.id === f.id);
             setFabricacoes((p) => p.map((x) => (x.id === f.id ? f : x)));
-            try { await api.put(`/fabricacoes/${f.id}`, f); } catch { }
+            try {
+                await api.put(`/fabricacoes/${f.id}`, f);
+                if (f.status === 'concluido') await recarregarEstoque();
+                return { ok: true };
+            } catch (e) {
+                if (anterior) setFabricacoes((p) => p.map((x) => (x.id === f.id ? anterior : x)));
+                return falhaDaApi(e);
+            }
         } else {
             const tempId = Date.now();
             setFabricacoes((p) => [...p, { ...f, id: tempId }]);
             try {
                 const res = await api.post('/fabricacoes', f);
                 if (res.data?.id) setFabricacoes((p) => p.map((x) => x.id === tempId ? { ...f, id: res.data.id } : x));
-            } catch { }
+                if (f.status === 'concluido') await recarregarEstoque();
+                return { ok: true };
+            } catch (e) {
+                setFabricacoes((p) => p.filter((x) => x.id !== tempId));
+                return falhaDaApi(e);
+            }
         }
     }
     async function excluirFab(id) {
@@ -374,8 +414,16 @@ export function PadariaProvider({ children }) {
         try { await api.delete(`/fabricacoes/${id}`); } catch { }
     }
     async function mudarStatusFabricacao(id, s) {
+        const anterior = fabricacoes.find((x) => x.id === id);
         setFabricacoes((p) => p.map((x) => (x.id === id ? { ...x, status: s } : x)));
-        try { await api.patch(`/fabricacoes/${id}`, { status: s }); } catch { }
+        try {
+            await api.patch(`/fabricacoes/${id}`, { status: s });
+            if (s === 'concluido') await recarregarEstoque();
+            return { ok: true };
+        } catch (e) {
+            if (anterior) setFabricacoes((p) => p.map((x) => (x.id === id ? anterior : x)));
+            return falhaDaApi(e);
+        }
     }
     // Funcionario actions
     async function salvarFunc(f) {

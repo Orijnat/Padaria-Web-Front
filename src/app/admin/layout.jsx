@@ -15,19 +15,19 @@ export default function AdminLayout({ children }) {
   const { adminLogado, sair } = usePadaria();
 
   useEffect(() => {
-    if (!adminLogado) router.replace('/admin-login');
+    if (!adminLogado) router.replace('/');
   }, [adminLogado, router]);
 
-  // Extrai a tela atual a partir do pathname (/dashboard → "dashboard")
+  // Extrai a tela atual a partir do pathname (/admin/dashboard → "dashboard")
   const current = pathname.split('/').filter(Boolean).pop() ?? 'dashboard';
 
   function handleNav(key) {
-    router.push(`/${key}`);
+    router.push(`/admin/${key}`);
   }
 
   function handleLogout() {
     sair();
-    router.push('/portal');
+    router.push('/');
   }
 
   if (!adminLogado) return null;

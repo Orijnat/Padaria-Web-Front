@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 export function ListaFabricacao({ fabricacoes, produtos, funcionarios, onNova, onEditar, onExcluir, onMudarStatus, }) {
+    const [erroStatus, setErroStatus] = useState('');
     const next = {
         planejado: 'em_producao',
         em_producao: 'concluido',
@@ -10,6 +11,13 @@ export function ListaFabricacao({ fabricacoes, produtos, funcionarios, onNova, o
         em_producao: 'Iniciar',
         concluido: 'Concluir',
     };
+    async function handleMudarStatus(id, nx) {
+        setErroStatus('');
+        const res = await onMudarStatus(id, nx);
+        if (res && res.ok === false && res.erro) {
+            setErroStatus(res.erro);
+        }
+    }
     const sorted = [...fabricacoes].sort((a, b) => b.data.localeCompare(a.data));
     return (<div className="flex-1 p-8 overflow-auto">
       <div className="flex items-center justify-between mb-8">
@@ -25,6 +33,10 @@ export function ListaFabricacao({ fabricacoes, produtos, funcionarios, onNova, o
           + Nova Ordem
         </button>
       </div>
+
+      {erroStatus && (<div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium" style={{ background: '#fde8e8', color: '#b91c1c', border: '1px solid #f8b4b4' }}>
+          {erroStatus}
+        </div>)}
 
       <div className="rounded-xl overflow-hidden shadow-sm" style={{ border: '1px solid #e9d0aa' }}>
         <table className="w-full" style={{ borderCollapse: 'collapse' }}>
@@ -61,7 +73,7 @@ export function ListaFabricacao({ fabricacoes, produtos, funcionarios, onNova, o
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex gap-2">
-                      {nx && (<button onClick={() => onMudarStatus(f.id, nx)} className="text-xs px-2.5 py-1 rounded font-medium cursor-pointer transition-colors" style={{ background: '#f5e9d6', color: '#8a5420' }}>
+                      {nx && (<button onClick={() => handleMudarStatus(f.id, nx)} className="text-xs px-2.5 py-1 rounded font-medium cursor-pointer transition-colors" style={{ background: '#f5e9d6', color: '#8a5420' }}>
                           {nextLabel[nx]}
                         </button>)}
                       <button onClick={() => onEditar(f)} className="text-xs px-2.5 py-1 rounded cursor-pointer transition-colors" style={{ background: '#f5e9d6', color: '#8a5420' }}>

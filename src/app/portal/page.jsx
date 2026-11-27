@@ -16,7 +16,7 @@ export default function PortalPage() {
 
   // Se admin já estiver logado, redireciona direto para o painel
   useEffect(() => {
-    if (adminLogado) router.replace('/dashboard');
+    if (adminLogado) router.replace('/admin/dashboard');
   }, [adminLogado, router]);
 
   if (clienteLogado) {

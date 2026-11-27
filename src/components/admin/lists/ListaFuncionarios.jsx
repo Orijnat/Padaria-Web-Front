@@ -64,13 +64,13 @@ export function ListaFuncionarios({ funcionarios, onNovo, onEditar, onExcluir, }
               <div className="flex justify-between text-xs">
                 <span style={{ color: '#a96e2c' }}>Admissão</span>
                 <span className="font-mono-data" style={{ color: '#321a07' }}>
-                  {new Date(f.dataAdmissao + 'T12:00').toLocaleDateString('pt-BR')}
+                  {f.dataAdmissao ? new Date(f.dataAdmissao + 'T12:00').toLocaleDateString('pt-BR') : '—'}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
                 <span style={{ color: '#a96e2c' }}>Salário</span>
                 <span className="font-mono-data font-semibold" style={{ color: '#4e2b0e' }}>
-                  R$ {f.salario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {Number(f.salario || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
