@@ -89,7 +89,7 @@ export function PortalCliente({ cliente, produtos, categorias, pedidos, onNovoPe
 
       {pedidoFeito && (<div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(50,26,7,0.5)', backdropFilter: 'blur(2px)' }}>
           <div className="rounded-2xl px-10 py-8 text-center shadow-2xl fade-up" style={{ background: '#fff', border: '1px solid #e9d0aa' }}>
-            <div className="text-5xl mb-3">🥖</div>
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center text-xl font-bold" style={{ background: '#f5e9d6', color: '#8a5420' }}>✓</div>
             <div className="font-display text-2xl font-semibold italic mb-1" style={{ color: '#321a07' }}>
               Pedido Realizado com Sucesso!
             </div>
@@ -165,7 +165,6 @@ export function PortalCliente({ cliente, produtos, categorias, pedidos, onNovoPe
                 </div>
 
                 {carrinho.size === 0 ? (<div className="py-8 text-center">
-                    <div className="text-3xl mb-2">🧺</div>
                     <p className="text-sm" style={{ color: '#c48d4a' }}>
                       Adicione itens do cardápio para pedir
                     </p>
@@ -221,7 +220,6 @@ export function PortalCliente({ cliente, produtos, categorias, pedidos, onNovoPe
             </div>
 
             {meusPedidos.length === 0 ? (<div className="text-center py-16 bg-white rounded-2xl border p-8" style={{ borderColor: '#e9d0aa' }}>
-                <div className="text-5xl mb-3">🧺</div>
                 <p className="text-base font-medium" style={{ color: '#4e2b0e' }}>
                   Você ainda não fez nenhum pedido.
                 </p>

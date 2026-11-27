@@ -46,7 +46,7 @@ export function CadastroFuncionario({ editando, onSalvar, onCancelar, }) {
     return (<div className="flex-1 p-8 overflow-auto" style={{ maxWidth: 800 }}>
       <CadHeader title={editando ? 'Editar Funcionário' : 'Cadastro de Funcionário'} subtitle="Registre um novo colaborador na equipe da padaria" onVoltar={onCancelar} voltar="Funcionários"/>
       <form onSubmit={submit} className="flex flex-col gap-5">
-        <FormSection title="Dados Pessoais" icon="👤">
+        <FormSection title="Dados Pessoais" icon="•">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Nome completo">
               <input type="text" value={form.nome} onChange={(e) => setF('nome', e.target.value)} placeholder="Ex: Maria da Silva Santos" required className={IC} style={inp()} onFocus={focusBrown} onBlur={blurBrown}/>
@@ -65,7 +65,7 @@ export function CadastroFuncionario({ editando, onSalvar, onCancelar, }) {
           </div>
         </FormSection>
 
-        <FormSection title="Vínculo Empregatício" icon="💼">
+        <FormSection title="Vínculo Empregatício" icon="•">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Cargo">
               <select value={form.cargo} onChange={(e) => setF('cargo', e.target.value)} className={IC} style={inp()} onFocus={focusBrown} onBlur={blurBrown}>

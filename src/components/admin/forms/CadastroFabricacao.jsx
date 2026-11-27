@@ -55,7 +55,7 @@ export function CadastroFabricacao({ editando, produtos, funcionarios, onSalvar,
             </div>)}
         </FormSection>
 
-        <FormSection title="Planejamento" icon="📅">
+        <FormSection title="Planejamento" icon="◷">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Data de produção">
               <input type="date" value={form.data} onChange={(e) => setF('data', e.target.value)} className={IC} style={inp()} onFocus={focusBrown} onBlur={blurBrown}/>

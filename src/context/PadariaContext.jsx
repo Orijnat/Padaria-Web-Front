@@ -70,7 +70,7 @@ export function PadariaProvider({ children }) {
                     preco: Number(item.preco) || 0,
                     ativo: item.ativo !== undefined ? Boolean(item.ativo) : true,
                     descricao: item.descricao || '',
-                    emoji: item.emoji || '🥖',
+                    emoji: item.emoji || '',
                     estoque: Number(item.estoque) || 0,
                 })));
             }
@@ -83,7 +83,7 @@ export function PadariaProvider({ children }) {
                     id: c.id,
                     nome: c.nome,
                     descricao: c.descricao || '',
-                    emoji: c.emoji || '🏷️',
+                    emoji: c.emoji || '',
                     cor: c.cor || '#c48d4a',
                     ativo: c.ativo !== false,
                 })));
@@ -165,7 +165,7 @@ export function PadariaProvider({ children }) {
                 if (Array.isArray(resCat.data) && resCat.data.length > 0) {
                     setCategorias(resCat.data.map((c) => ({
                         id: c.id, nome: c.nome, descricao: c.descricao || '',
-                        emoji: c.emoji || '🏷️', cor: c.cor || '#c48d4a', ativo: c.ativo !== false,
+                        emoji: c.emoji || '', cor: c.cor || '#c48d4a', ativo: c.ativo !== false,
                     })));
                 }
             } catch { }
@@ -176,7 +176,7 @@ export function PadariaProvider({ children }) {
                         id: item.id, nome: item.nome, categoriaId: item.categoriaId || 1,
                         receitaId: item.receitaId || null, preco: Number(item.preco) || 0,
                         ativo: item.ativo !== undefined ? Boolean(item.ativo) : true,
-                        descricao: item.descricao || '', emoji: item.emoji || '🥖',
+                        descricao: item.descricao || '', emoji: item.emoji || '',
                         estoque: Number(item.estoque) || 0,
                     })));
                 }

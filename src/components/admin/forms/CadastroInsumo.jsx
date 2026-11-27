@@ -49,7 +49,7 @@ export function CadastroInsumo({ editando, onSalvar, onCancelar }) {
           </Field>
         </FormSection>
 
-        <FormSection title="Controle de Estoque" icon="📦">
+        <FormSection title="Controle de Estoque" icon="⬡">
           <div className="grid grid-cols-3 gap-4">
             <Field label="Estoque atual" hint="quantidade disponível">
               <input type="number" step="0.01" min="0" value={form.estoque} onChange={(e) => setF('estoque', e.target.value)} placeholder="0" required className={IC} style={inp()} onFocus={focusBrown} onBlur={blurBrown}/>
@@ -62,7 +62,7 @@ export function CadastroInsumo({ editando, onSalvar, onCancelar }) {
             </Field>
           </div>
           {form.estoque !== '' && form.minimo !== '' && (<div className="flex items-center gap-3 px-4 py-3 rounded-lg" style={{ background: isLow ? '#fce8e6' : '#d1fae5' }}>
-              <span>{isLow ? '⚠️' : '✅'}</span>
+              <span className="text-xs font-bold" style={{ color: isLow ? '#c0392b' : '#065f46' }}>{isLow ? '!' : 'OK'}</span>
               <span className="text-sm font-medium" style={{ color: isLow ? '#c0392b' : '#065f46' }}>
                 {isLow
                 ? 'Estoque abaixo do mínimo — gere alerta de reposição'

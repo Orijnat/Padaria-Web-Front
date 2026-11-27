@@ -73,7 +73,7 @@ export function CadastroReceita({ editando, insumos, categorias, onSalvar, onCan
           </div>
         </FormSection>
 
-        <FormSection title="Ingredientes" icon="🧂">
+        <FormSection title="Ingredientes" icon="◈">
           <div className="flex flex-col gap-2">
             {ings.map((ing, idx) => (<div key={idx} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#fdf8f3', border: '1px solid #f2ead8' }}>
                 <div className="flex-1">
@@ -114,7 +114,7 @@ export function CadastroReceita({ editando, insumos, categorias, onSalvar, onCan
             </div>)}
         </FormSection>
 
-        <FormSection title="Modo de Preparo" icon="📋">
+        <FormSection title="Modo de Preparo" icon="◈">
           <textarea value={form.instrucoes} onChange={(e) => setF('instrucoes', e.target.value)} placeholder="Descreva passo a passo o preparo da receita…" rows={5} className="w-full px-4 py-3 rounded-lg text-sm outline-none resize-none" style={inp()} onFocus={focusBrown} onBlur={blurBrown}/>
         </FormSection>
 

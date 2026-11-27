@@ -4,24 +4,6 @@ import { FormSection } from '@/components/ui/FormSection';
 import { CadHeader } from '@/components/ui/CadHeader';
 import { FormActions } from '@/components/ui/FormActions';
 import { inp, IC, focusBrown, blurBrown } from '@/components/ui/styles';
-const emojis = [
-    '🥖',
-    '🍰',
-    '🥐',
-    '🧀',
-    '☕',
-    '🍩',
-    '🧁',
-    '🫓',
-    '🍕',
-    '🥗',
-    '🧆',
-    '🫙',
-    '🍪',
-    '🥧',
-    '🍮',
-    '🥨',
-];
 const cores = [
     '#c48d4a',
     '#e8a020',
@@ -38,7 +20,7 @@ export function CadastroCategoria({ editando, onSalvar, onCancelar, }) {
     const [form, setForm] = useState({
         nome: editando?.nome ?? '',
         descricao: editando?.descricao ?? '',
-        emoji: editando?.emoji ?? '🥖',
+        emoji: editando?.emoji ?? '',
         cor: editando?.cor ?? '#c48d4a',
         ativo: editando ? editando.ativo : true,
     });
@@ -62,8 +44,8 @@ export function CadastroCategoria({ editando, onSalvar, onCancelar, }) {
       <form onSubmit={submit} className="flex flex-col gap-5">
         <FormSection title="Identidade da Categoria" icon="◧">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl flex-shrink-0" style={{ background: form.cor + '22', border: `2px solid ${form.cor}` }}>
-              {form.emoji}
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-display font-semibold flex-shrink-0" style={{ background: form.cor + '22', border: `2px solid ${form.cor}`, color: form.cor }}>
+              {form.nome ? form.nome.charAt(0).toUpperCase() : 'C'}
             </div>
             <div className="flex-1">
               <Field label="Nome da categoria">
@@ -76,17 +58,7 @@ export function CadastroCategoria({ editando, onSalvar, onCancelar, }) {
           </Field>
         </FormSection>
 
-        <FormSection title="Aparência" icon="🎨">
-          <Field label="Emoji da categoria">
-            <div className="flex gap-2 flex-wrap">
-              {emojis.map((e) => (<button key={e} type="button" onClick={() => setF('emoji', e)} className="w-11 h-11 rounded-xl text-xl flex items-center justify-center transition-all cursor-pointer" style={{
-                background: form.emoji === e ? '#f5e9d6' : '#fdf8f3',
-                border: `2px solid ${form.emoji === e ? '#c48d4a' : '#f2ead8'}`,
-            }}>
-                  {e}
-                </button>))}
-            </div>
-          </Field>
+        <FormSection title="Aparência" icon="◧">
           <Field label="Cor de destaque">
             <div className="flex gap-3 flex-wrap">
               {cores.map((c) => (<button key={c} type="button" onClick={() => setF('cor', c)} className="w-9 h-9 rounded-full transition-all flex items-center justify-center cursor-pointer" style={{

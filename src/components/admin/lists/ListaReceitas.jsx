@@ -29,7 +29,7 @@ export function ListaReceitas({ receitas, insumos, categorias, onNova, onEditar,
             </div>
           </div>
           <div className="flex gap-6 text-sm mb-8" style={{ color: '#a96e2c' }}>
-            <span>⏱ {detalhe.tempoPreparo} min</span>
+            <span>Tempo: {detalhe.tempoPreparo} min</span>
             <span>↗ {detalhe.rendimento} {detalhe.unidadeRendimento}</span>
           </div>
           <div className="rounded-xl p-6 mb-5" style={{ background: '#fff', border: '1px solid #e9d0aa' }}>
@@ -102,9 +102,9 @@ export function ListaReceitas({ receitas, insumos, categorias, onNova, onEditar,
                   </span>)}
               </div>
               <div className="flex gap-3 text-xs mb-4" style={{ color: '#a96e2c' }}>
-                <span>⏱ {r.tempoPreparo}min</span>
+                <span>Tempo: {r.tempoPreparo}min</span>
                 <span>↗ {r.rendimento} {r.unidadeRendimento}</span>
-                <span>🧂 {r.ingredientes.length}</span>
+                <span>Ingredientes: {r.ingredientes.length}</span>
               </div>
               <div className="flex gap-2">
                 <button onClick={(e) => {

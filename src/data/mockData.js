@@ -1,9 +1,9 @@
 export const categoriasBase = [
-    { id: 1, nome: 'Pães', descricao: 'Pães artesanais e industriais', emoji: '🥖', cor: '#c48d4a', ativo: true },
-    { id: 2, nome: 'Bolos', descricao: 'Bolos inteiros e fatias', emoji: '🍰', cor: '#e8a020', ativo: true },
-    { id: 3, nome: 'Folhados', descricao: 'Croissants e massas folhadas', emoji: '🥐', cor: '#d9b07a', ativo: true },
-    { id: 4, nome: 'Salgados', descricao: 'Salgadinhos e esfihas', emoji: '🧀', cor: '#8a5420', ativo: true },
-    { id: 5, nome: 'Bebidas', descricao: 'Cafés, sucos e vitaminas', emoji: '☕', cor: '#6b3d16', ativo: true },
+    { id: 1, nome: 'Pães', descricao: 'Pães artesanais e industriais', emoji: '', cor: '#c48d4a', ativo: true },
+    { id: 2, nome: 'Bolos', descricao: 'Bolos inteiros e fatias', emoji: '', cor: '#e8a020', ativo: true },
+    { id: 3, nome: 'Folhados', descricao: 'Croissants e massas folhadas', emoji: '', cor: '#d9b07a', ativo: true },
+    { id: 4, nome: 'Salgados', descricao: 'Salgadinhos e esfihas', emoji: '', cor: '#8a5420', ativo: true },
+    { id: 5, nome: 'Bebidas', descricao: 'Cafés, sucos e vitaminas', emoji: '', cor: '#6b3d16', ativo: true },
 ];
 export const funcionariosBase = [
     { id: 1, nome: 'João Silva', cargo: 'Padeiro', email: 'joao@padaria.com', telefone: '(11) 99999-0001', cpf: '123.456.789-00', dataAdmissao: '2020-03-15', salario: 2800, ativo: true },
@@ -70,11 +70,11 @@ export const receitasBase = [
     },
 ];
 export const produtosBase = [
-    { id: 1, nome: 'Pão Francês', categoriaId: 1, receitaId: 1, preco: 0.9, ativo: true, descricao: 'Crocante por fora, macio por dentro.', emoji: '🥖' },
-    { id: 2, nome: 'Bolo de Chocolate', categoriaId: 2, receitaId: 2, preco: 12.0, ativo: true, descricao: 'Fatia generosa do nosso bolo úmido.', emoji: '🍫' },
-    { id: 3, nome: 'Croissant', categoriaId: 3, receitaId: 3, preco: 8.5, ativo: true, descricao: 'Folhado artesanal com manteiga francesa.', emoji: '🥐' },
-    { id: 4, nome: 'Pão de Queijo (6un)', categoriaId: 4, receitaId: null, preco: 18.0, ativo: true, descricao: 'Pão de queijo mineiro tradicional.', emoji: '🧀' },
-    { id: 5, nome: 'Café com Leite', categoriaId: 5, receitaId: null, preco: 7.0, ativo: true, descricao: 'Café coado artesanal com leite vaporizado.', emoji: '☕' },
+    { id: 1, nome: 'Pão Francês', categoriaId: 1, receitaId: 1, preco: 0.9, ativo: true, descricao: 'Crocante por fora, macio por dentro.', emoji: '' },
+    { id: 2, nome: 'Bolo de Chocolate', categoriaId: 2, receitaId: 2, preco: 12.0, ativo: true, descricao: 'Fatia generosa do nosso bolo úmido.', emoji: '' },
+    { id: 3, nome: 'Croissant', categoriaId: 3, receitaId: 3, preco: 8.5, ativo: true, descricao: 'Folhado artesanal com manteiga francesa.', emoji: '' },
+    { id: 4, nome: 'Pão de Queijo (6un)', categoriaId: 4, receitaId: null, preco: 18.0, ativo: true, descricao: 'Pão de queijo mineiro tradicional.', emoji: '' },
+    { id: 5, nome: 'Café com Leite', categoriaId: 5, receitaId: null, preco: 7.0, ativo: true, descricao: 'Café coado artesanal com leite vaporizado.', emoji: '' },
 ];
 export const fabricacoesBase = [
     { id: 1, produtoId: 1, funcionarioId: 1, data: '2026-08-17', quantidade: 200, status: 'concluido' },
