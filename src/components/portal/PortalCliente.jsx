@@ -5,12 +5,17 @@ export function PortalCliente({ cliente, produtos, categorias, pedidos, onNovoPe
     const [carrinho, setCarrinho] = useState(new Map());
     const [obs, setObs] = useState('');
     const [pedidoFeito, setPedidoFeito] = useState(false);
+    const [erroPedido, setErroPedido] = useState('');
+    const [enviando, setEnviando] = useState(false);
     const [catFiltro, setCatFiltro] = useState(null);
     const ativos = produtos.filter((p) => p.ativo);
     const filtrados = catFiltro
         ? ativos.filter((p) => p.categoriaId === catFiltro)
         : ativos;
-    const meusPedidos = pedidos.filter((p) => p.clienteEmail.toLowerCase() === cliente.email.toLowerCase());
+    const meusPedidos = pedidos.filter((p) =>
+        p.clienteId === cliente.id ||
+        (p.clienteEmail && p.clienteEmail.toLowerCase() === cliente.email.toLowerCase())
+    );
     function addC(id) {
         setCarrinho((m) => new Map(m).set(id, (m.get(id) ?? 0) + 1));
     }
@@ -29,14 +34,16 @@ export function PortalCliente({ cliente, produtos, categorias, pedidos, onNovoPe
         const p = produtos.find((p) => p.id === id);
         return a + (p?.preco ?? 0) * q;
     }, 0);
-    function confirmar() {
-        if (carrinho.size === 0)
+    async function confirmar() {
+        if (carrinho.size === 0 || enviando)
             return;
+        setErroPedido('');
+        setEnviando(true);
         const itens = [...carrinho.entries()].map(([id, q]) => {
             const p = produtos.find((p) => p.id === id);
             return { produtoId: id, quantidade: q, precoUnit: p.preco };
         });
-        onNovoPedido({
+        const res = await onNovoPedido({
             clienteNome: cliente.nome,
             clienteEmail: cliente.email,
             itens,
@@ -45,6 +52,11 @@ export function PortalCliente({ cliente, produtos, categorias, pedidos, onNovoPe
             data: new Date().toISOString().split('T')[0],
             observacao: obs,
         });
+        setEnviando(false);
+        if (res && res.ok === false) {
+            setErroPedido(res.campos?.estoque || res.erro || 'Não foi possível enviar o pedido.');
+            return;
+        }
         setCarrinho(new Map());
         setObs('');
         setPedidoFeito(true);
@@ -187,8 +199,11 @@ export function PortalCliente({ cliente, produtos, categorias, pedidos, onNovoPe
                     color: '#321a07',
                     fontFamily: 'inherit',
                 }}/>
-                    <button onClick={confirmar} className="w-full py-3 rounded-xl text-sm font-semibold cursor-pointer shadow transition-all hover:brightness-110" style={{ background: '#8a5420', color: '#faf6f0' }}>
-                      Confirmar e Enviar Pedido
+                    {erroPedido && (<div className="mb-3 px-3 py-2 rounded-lg text-xs font-medium" style={{ background: '#fde8e8', color: '#b91c1c', border: '1px solid #f8b4b4' }}>
+                        {erroPedido}
+                      </div>)}
+                    <button onClick={confirmar} disabled={enviando} className="w-full py-3 rounded-xl text-sm font-semibold cursor-pointer shadow transition-all hover:brightness-110 disabled:opacity-60" style={{ background: '#8a5420', color: '#faf6f0' }}>
+                      {enviando ? 'Enviando...' : 'Confirmar e Enviar Pedido'}
                     </button>
                   </>)}
               </div>

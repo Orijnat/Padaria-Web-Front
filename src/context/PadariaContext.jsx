@@ -41,12 +41,13 @@ export function PadariaProvider({ children }) {
     const [pedidos, setPedidos] = useState(() => getSaved('padaria_pedidos', pedidosBase));
     const [adminLogado, setAdminLogado] = useState(false);
     const [clienteLogado, setClienteLogado] = useState(null);
-    // Ressincroniza insumos/produtos após login de funcionário (rotas protegidas).
+    // Ressincroniza todos os dados com a API após login de funcionário.
     async function sincronizarComApi() {
+        // Insumos
         try {
             const resInsumos = await api.get('/insumos');
             if (Array.isArray(resInsumos.data) && resInsumos.data.length > 0) {
-                const mapped = resInsumos.data.map((item) => ({
+                setInsumos(resInsumos.data.map((item) => ({
                     id: item.id,
                     nome: item.nome,
                     unidade: item.unidadeMedida || 'kg',
@@ -54,15 +55,14 @@ export function PadariaProvider({ children }) {
                     minimo: Number(item.estoqueMinimo) || 0,
                     custo: Number(item.custo) || 0,
                     fornecedor: item.fornecedor || '',
-                }));
-                setInsumos(mapped);
+                })));
             }
-        }
-        catch { }
+        } catch { }
+        // Produtos
         try {
             const resProdutos = await api.get('/produtos');
             if (Array.isArray(resProdutos.data) && resProdutos.data.length > 0) {
-                const mapped = resProdutos.data.map((item) => ({
+                setProdutos(resProdutos.data.map((item) => ({
                     id: item.id,
                     nome: item.nome,
                     categoriaId: item.categoriaId || 1,
@@ -71,19 +71,118 @@ export function PadariaProvider({ children }) {
                     ativo: item.ativo !== undefined ? Boolean(item.ativo) : true,
                     descricao: item.descricao || '',
                     emoji: item.emoji || '🥖',
-                }));
-                setProdutos(mapped);
+                    estoque: Number(item.estoque) || 0,
+                })));
             }
-        }
-        catch { }
+        } catch { }
+        // Categorias (pública)
+        try {
+            const resCat = await api.get('/categorias');
+            if (Array.isArray(resCat.data) && resCat.data.length > 0) {
+                setCategorias(resCat.data.map((c) => ({
+                    id: c.id,
+                    nome: c.nome,
+                    descricao: c.descricao || '',
+                    emoji: c.emoji || '🏷️',
+                    cor: c.cor || '#c48d4a',
+                    ativo: c.ativo !== false,
+                })));
+            }
+        } catch { }
+        // Receitas (protegida por funcionário)
+        try {
+            const resReceitas = await api.get('/receitas');
+            if (Array.isArray(resReceitas.data) && resReceitas.data.length > 0) {
+                setReceitas(resReceitas.data.map((r) => ({
+                    id: r.id,
+                    nome: r.nome,
+                    rendimento: Number(r.rendimento) || 1,
+                    unidadeRendimento: r.unidadeRendimento || 'un',
+                    tempoPreparo: r.tempoPreparo || '',
+                    ingredientes: Array.isArray(r.ingredientes) ? r.ingredientes : [],
+                })));
+            }
+        } catch { }
+        // Fabricações (protegida por funcionário)
+        try {
+            const resFab = await api.get('/fabricacoes');
+            if (Array.isArray(resFab.data) && resFab.data.length > 0) {
+                setFabricacoes(resFab.data.map((f) => ({
+                    id: f.id,
+                    produtoId: f.produtoId,
+                    funcionarioId: f.funcionarioId,
+                    data: f.data,
+                    quantidade: Number(f.quantidade) || 1,
+                    status: f.status || 'planejado',
+                    observacao: f.observacao || '',
+                })));
+            }
+        } catch { }
+        // Funcionários (protegida por funcionário)
+        try {
+            const resFunc = await api.get('/funcionarios');
+            if (Array.isArray(resFunc.data) && resFunc.data.length > 0) {
+                setFuncionarios(resFunc.data.map((f) => ({
+                    id: f.id,
+                    nome: f.nome,
+                    cargo: f.cargo || '',
+                    email: f.email || '',
+                    telefone: f.telefone || '',
+                    ativo: f.ativo !== false,
+                })));
+            }
+        } catch { }
+        // Pedidos (protegida — admin vê todos)
+        try {
+            const resPedidos = await api.get('/pedidos');
+            if (Array.isArray(resPedidos.data)) {
+                setPedidos(resPedidos.data.map((p) => ({
+                    id: p.id,
+                    clienteId: p.clienteId || null,
+                    clienteNome: p.cliente?.nome || p.clienteNome || '',
+                    clienteEmail: p.cliente?.email || p.clienteEmail || '',
+                    itens: Array.isArray(p.itens) ? p.itens.map((it) => ({
+                        produtoId: it.produtoId,
+                        quantidade: it.quantidade,
+                        precoUnit: Number(it.precoUnit) || 0,
+                    })) : [],
+                    total: Number(p.total) || 0,
+                    status: p.status || 'pendente',
+                    data: p.data
+                        ? String(p.data).slice(0, 10)
+                        : (p.createdAt ? new Date(p.createdAt).toISOString().split('T')[0] : ''),
+                    observacao: p.observacao || '',
+                })));
+            }
+        } catch { }
     }
     // 1. Sincronização com API e restauração de sessão
     useEffect(() => {
-        // Sincronização opcional se API estiver disponível
-        async function syncWithApi() {
-            await sincronizarComApi();
+        // Categorias e produtos são públicos — sincroniza no boot para todos
+        async function syncPublico() {
+            try {
+                const resCat = await api.get('/categorias');
+                if (Array.isArray(resCat.data) && resCat.data.length > 0) {
+                    setCategorias(resCat.data.map((c) => ({
+                        id: c.id, nome: c.nome, descricao: c.descricao || '',
+                        emoji: c.emoji || '🏷️', cor: c.cor || '#c48d4a', ativo: c.ativo !== false,
+                    })));
+                }
+            } catch { }
+            try {
+                const resProdutos = await api.get('/produtos');
+                if (Array.isArray(resProdutos.data) && resProdutos.data.length > 0) {
+                    setProdutos(resProdutos.data.map((item) => ({
+                        id: item.id, nome: item.nome, categoriaId: item.categoriaId || 1,
+                        receitaId: item.receitaId || null, preco: Number(item.preco) || 0,
+                        ativo: item.ativo !== undefined ? Boolean(item.ativo) : true,
+                        descricao: item.descricao || '', emoji: item.emoji || '🥖',
+                        estoque: Number(item.estoque) || 0,
+                    })));
+                }
+            } catch { }
         }
-        syncWithApi();
+        syncPublico();
         // Restaura o login salvo (token JWT no localStorage).
         const token = localStorage.getItem(CHAVE_TOKEN);
         if (token && tokenValido(token)) {
@@ -191,16 +290,22 @@ export function PadariaProvider({ children }) {
         catch { }
     }
     // Receita actions
-    function salvarReceita(r) {
+    async function salvarReceita(r) {
         if ('id' in r) {
             setReceitas((p) => p.map((x) => (x.id === r.id ? r : x)));
-        }
-        else {
-            setReceitas((p) => [...p, { ...r, id: Date.now() }]);
+            try { await api.put(`/receitas/${r.id}`, r); } catch { }
+        } else {
+            const tempId = Date.now();
+            setReceitas((p) => [...p, { ...r, id: tempId }]);
+            try {
+                const res = await api.post('/receitas', r);
+                if (res.data?.id) setReceitas((p) => p.map((x) => x.id === tempId ? { ...r, id: res.data.id } : x));
+            } catch { }
         }
     }
-    function excluirReceita(id) {
+    async function excluirReceita(id) {
         setReceitas((p) => p.filter((x) => x.id !== id));
+        try { await api.delete(`/receitas/${id}`); } catch { }
     }
     // Produto actions
     async function salvarProduto(p) {
@@ -251,50 +356,99 @@ export function PadariaProvider({ children }) {
         catch { }
     }
     // Fabricacao actions
-    function salvarFab(f) {
+    async function salvarFab(f) {
         if ('id' in f) {
             setFabricacoes((p) => p.map((x) => (x.id === f.id ? f : x)));
-        }
-        else {
-            setFabricacoes((p) => [...p, { ...f, id: Date.now() }]);
+            try { await api.put(`/fabricacoes/${f.id}`, f); } catch { }
+        } else {
+            const tempId = Date.now();
+            setFabricacoes((p) => [...p, { ...f, id: tempId }]);
+            try {
+                const res = await api.post('/fabricacoes', f);
+                if (res.data?.id) setFabricacoes((p) => p.map((x) => x.id === tempId ? { ...f, id: res.data.id } : x));
+            } catch { }
         }
     }
-    function excluirFab(id) {
+    async function excluirFab(id) {
         setFabricacoes((p) => p.filter((x) => x.id !== id));
+        try { await api.delete(`/fabricacoes/${id}`); } catch { }
     }
-    function mudarStatusFabricacao(id, s) {
+    async function mudarStatusFabricacao(id, s) {
         setFabricacoes((p) => p.map((x) => (x.id === id ? { ...x, status: s } : x)));
+        try { await api.patch(`/fabricacoes/${id}`, { status: s }); } catch { }
     }
     // Funcionario actions
-    function salvarFunc(f) {
+    async function salvarFunc(f) {
         if ('id' in f) {
             setFuncionarios((p) => p.map((x) => (x.id === f.id ? f : x)));
-        }
-        else {
-            setFuncionarios((p) => [...p, { ...f, id: Date.now() }]);
+            try { await api.put(`/funcionarios/${f.id}`, f); } catch { }
+        } else {
+            const tempId = Date.now();
+            setFuncionarios((p) => [...p, { ...f, id: tempId }]);
+            try {
+                const res = await api.post('/funcionarios', f);
+                if (res.data?.id) setFuncionarios((p) => p.map((x) => x.id === tempId ? { ...f, id: res.data.id } : x));
+            } catch { }
         }
     }
-    function excluirFunc(id) {
+    async function excluirFunc(id) {
         setFuncionarios((p) => p.filter((x) => x.id !== id));
+        try { await api.delete(`/funcionarios/${id}`); } catch { }
     }
     // Categoria actions
-    function salvarCat(c) {
+    async function salvarCat(c) {
         if ('id' in c) {
             setCategorias((p) => p.map((x) => (x.id === c.id ? c : x)));
-        }
-        else {
-            setCategorias((p) => [...p, { ...c, id: Date.now() }]);
+            try { await api.put(`/categorias/${c.id}`, c); } catch { }
+        } else {
+            const tempId = Date.now();
+            setCategorias((p) => [...p, { ...c, id: tempId }]);
+            try {
+                const res = await api.post('/categorias', c);
+                if (res.data?.id) setCategorias((p) => p.map((x) => x.id === tempId ? { ...c, id: res.data.id } : x));
+            } catch { }
         }
     }
-    function excluirCat(id) {
+    async function excluirCat(id) {
         setCategorias((p) => p.filter((x) => x.id !== id));
+        try { await api.delete(`/categorias/${id}`); } catch { }
     }
     // Pedidos & Clientes
-    function mudarStatusPedido(id, s) {
+    async function mudarStatusPedido(id, s) {
+        const anterior = pedidos.find((x) => x.id === id);
         setPedidos((p) => p.map((x) => (x.id === id ? { ...x, status: s } : x)));
+        try {
+            await api.patch(`/pedidos/${id}`, { status: s });
+            return { ok: true };
+        } catch (e) {
+            if (anterior) {
+                setPedidos((p) => p.map((x) => (x.id === id ? anterior : x)));
+            }
+            return falhaDaApi(e);
+        }
     }
-    function novoPedidoCliente(p) {
-        setPedidos((prev) => [...prev, { ...p, id: Date.now() }]);
+    async function novoPedidoCliente(p) {
+        const tempId = Date.now();
+        setPedidos((prev) => [...prev, { ...p, id: tempId }]);
+        try {
+            const res = await api.post('/pedidos', {
+                itens: p.itens,
+                observacao: p.observacao || '',
+            });
+            if (res.data?.id) {
+                setPedidos((prev) => prev.map((x) => x.id === tempId ? {
+                    ...p,
+                    id: res.data.id,
+                    total: Number(res.data.total ?? p.total) || 0,
+                    status: res.data.status || p.status,
+                    data: res.data.data ? String(res.data.data).slice(0, 10) : p.data,
+                } : x));
+            }
+            return { ok: true, data: res.data };
+        } catch (e) {
+            setPedidos((prev) => prev.filter((x) => x.id !== tempId));
+            return falhaDaApi(e);
+        }
     }
     // Autenticação (back-end em padariaApi)
     function guardarToken(token) {
